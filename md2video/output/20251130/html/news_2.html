@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grok 调整搜索配额</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@300;500&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f9f9f7;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-image: url('data:image/svg+xml;utf8,<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h100v100H0z" fill="none"/><path d="M20 20h60v60H20z" stroke="%23eee" stroke-width="0.5" fill="none"/></svg>');
+        }
+        
+        .poster {
+            width: 90%;
+            max-width: 800px;
+            min-height: 90vh;
+            background: white;
+            box-shadow: 0 5px 30px rgba(0,0,0,0.1);
+            padding: 40px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-gap: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .poster::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: #d40000;
+            clip-path: polygon(0 0, 100% 0, 100% 100%);
+            opacity: 0.8;
+        }
+        
+        .headline {
+            grid-column: 1 / -1;
+            font-family: 'Noto Serif SC', serif;
+            font-size: 3.5rem;
+            line-height: 1.1;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #222;
+            border-bottom: 3px solid #d40000;
+            padding-bottom: 15px;
+        }
+        
+        .content {
+            grid-column: 1 / -1;
+            column-count: 2;
+            column-gap: 30px;
+            font-size: 1.1rem;
+        }
+        
+        .content p {
+            margin-bottom: 1.2em;
+            text-align: justify;
+            hyphens: auto;
+        }
+        
+        .content p:first-child::first-letter {
+            font-family: 'Noto Serif SC', serif;
+            font-size: 4em;
+            float: left;
+            line-height: 0.8;
+            margin-right: 8px;
+            color: #d40000;
+        }
+        
+        .source {
+            grid-column: 1 / -1;
+            font-size: 0.9rem;
+            color: #777;
+            text-align: right;
+            margin-top: 20px;
+            font-style: italic;
+        }
+        
+        @media (max-width: 768px) {
+            .poster {
+                grid-template-columns: 1fr;
+                padding: 25px;
+            }
+            
+            .headline {
+                font-size: 2.5rem;
+            }
+            
+            .content {
+                column-count: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="poster">
+        <h1 class="headline">Grok 进一步降低 Deep Search 和 Deeper Search 使用配额</h1>
+        
+        <div class="content">
+            <p>据观察，Grok 对其 Deep Search 功能的使用配额进行了调整。Deep Search 的每日配额降低至 5 次，而 Deeper Search 的配额则降至 2 次。</p>
+            <p>这一变化可能会影响重度用户的使用体验，特别是那些依赖这些高级搜索功能的研究人员和技术专业人士。Grok 尚未正式公布此次调整的具体原因，但业内人士推测可能与服务器资源优化或商业策略调整有关。</p>
+            <p>Deep Search 和 Deeper Search 是 Grok 平台提供的两种高级搜索模式，能够挖掘更深入的网络信息并返回更精准的结果。随着人工智能技术的普及，这类高级搜索功能的需求量近年来显著增长。</p>
+            <p>用户反馈显示，部分专业用户对配额减少表示担忧，认为这可能限制他们的工作效率。与此同时，也有用户表示理解平台可能面临的资源压力，建议 Grok 可以考虑提供额外的付费配额选项。</p>
+        </div>
+        
+        <div class="source">https://grok.com</div>
+    </div>
+</body>
+</html>

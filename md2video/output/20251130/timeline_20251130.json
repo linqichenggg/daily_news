@@ -1,0 +1,19 @@
+{
+  "timeline": [
+    {
+      "title": "LMSYS Chatbot Arena 新增三个 Llama 相关模型，或为 Llama 4 系列",
+      "start_seconds": "00:00:00,000",
+      "end_seconds": "00:00:19,233"
+    },
+    {
+      "title": "Grok 进一步降低 Deep Search 和 Deeper Search 使用配额",
+      "start_seconds": "00:00:19,233",
+      "end_seconds": "00:00:30,342"
+    },
+    {
+      "title": "VQASynth 更新：可合成用于空间推理的多模态思维数据集",
+      "start_seconds": "00:00:30,342",
+      "end_seconds": "00:00:57,405"
+    }
+  ]
+}
