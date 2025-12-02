@@ -1,0 +1,11 @@
+PS5 手柄图片 base64:
+================================================================================
+data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAI4AAABUCAYAAABUWA9BAAAAB3RJTUUH6AoDFAEqt0l3OwAAIABJRE...
+
+Xbox 手柄图片 base64:
+================================================================================
+data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAI4AAABYCAYAAAAjms86AAAAB3RJTUUH6AoDFAEqt0l3OwAAIABJRE...
+
+✅ 转换完成！
+PS5 长度: 23266 字符
+Xbox 长度: 22630 字符

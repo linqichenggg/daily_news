@@ -1,0 +1,14 @@
+# 配置文件（包含敏感信息）
+*.env
+.env
+.env.local
+.env.*.local
+
+# Python 字节码
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 输出文件
+output.mp3
+*.mp3
