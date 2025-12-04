@@ -20,10 +20,7 @@ sys.path.append(str(project_root))
 load_dotenv()
 
 # 导入公共模块
-from utils.paths import get_output_dir
-
-# 确保logs目录存在
-Path("logs").mkdir(exist_ok=True)
+from utils.paths import get_output_dir, get_log_file_path
 
 # 初始化日志
 logging.basicConfig(
@@ -31,7 +28,7 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(),
-        logging.FileHandler(f"logs/{datetime.now().strftime('%Y%m%d_%H%M%S')}_md2html.log")
+        logging.FileHandler(get_log_file_path("md2html"))
     ]
 )
 logger = logging.getLogger(__name__)
@@ -153,6 +150,13 @@ async def generate_html_for_news(news_content: str, client: AsyncOpenAI, system_
     logger.info(f"正在为新闻 {index+1} 生成HTML页面...")
     
     try:
+        # 先用代码替换日期（不依赖 LLM）
+        from datetime import datetime
+        weekdays = ['一', '二', '三', '四', '五', '六', '日']
+        today = datetime.now()
+        date_str = f"{today.year}年{today.month:02d}月{today.day:02d}日 星期{weekdays[today.weekday()]}"
+        template = template.replace('{{DATE}}', date_str)
+        
         # 构建包含模板的用户提示词
         user_prompt = f"""
 Task: Fill the provided HTML template with the news content.
@@ -166,13 +170,12 @@ HTML Template:
 Requirements:
 1. Return the FULL HTML code.
 2. Do NOT change the CSS or structure of the template.
-3. Replace `{{NUMBER}}` with the number "{index+1:02d}".
-4. Replace `{{TITLE}}` with the news headline.
-5. Replace `{{SUMMARY}}` with a 1-sentence summary (around 30-40 Chinese characters).
-6. Replace `{{CONTENT}}` with the full news body (wrap paragraphs in <p> tags).
-7. Replace `{{DATE}}` with today's date in format "YYYY年MM月DD日 星期X".
-8. Ensure all text is in Chinese.
-9. IMPORTANT: The content must fit within a single 1920x1080 page. Summarize the body text to approximately 100-200 Chinese characters to prevent overflow. Keep it concise.
+3. Replace `{{{{NUMBER}}}}` with the number "{index+1:02d}".
+4. Replace `{{{{TITLE}}}}` with the news headline.
+5. Replace `{{{{SUMMARY}}}}` with a 1-sentence summary (around 30-40 Chinese characters).
+6. Replace `{{{{CONTENT}}}}` with the full news body (wrap paragraphs in <p> tags).
+7. Ensure all text is in Chinese.
+8. IMPORTANT: The content must fit within a single 1920x1080 page. Summarize the body text to approximately 100-200 Chinese characters to prevent overflow. Keep it concise.
 """
 
         # 准备请求参数

@@ -17,8 +17,8 @@ except ImportError:
     print("Error: Please install moviepy (pip install moviepy)")
     sys.exit(1)
 
-# 确保logs目录存在
-Path("logs").mkdir(exist_ok=True)
+# 导入路径工具
+from utils.paths import get_log_file_path, get_output_base_dir
 
 # 初始化日志
 logging.basicConfig(
@@ -26,7 +26,7 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(),
-        logging.FileHandler(f"logs/{datetime.now().strftime('%Y%m%d_%H%M%S')}_img2video.log")
+        logging.FileHandler(get_log_file_path("img2video"))
     ]
 )
 logger = logging.getLogger(__name__)
@@ -255,9 +255,7 @@ def create_news_video(json_path, images_dir, output_name, output_dir, audio_dir=
 
 async def main():
     """主函数"""
-    output_dir = Path("output")
-    if not output_dir.exists():
-        output_dir.mkdir(parents=True, exist_ok=True)
+    output_dir = get_output_base_dir()
     
     date_dirs = sorted([d for d in output_dir.glob("*") if d.is_dir() and d.name.isdigit()], 
                       reverse=True)

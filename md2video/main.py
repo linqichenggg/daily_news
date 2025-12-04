@@ -1,7 +1,14 @@
 import asyncio
 import logging
+import os
+import sys
 from datetime import datetime
 from pathlib import Path
+
+# 确保项目根目录在 Python 路径中
+project_root = Path(__file__).parent
+sys.path.insert(0, str(project_root))
+os.chdir(project_root)  # 切换工作目录到 md2video
 
 from processors import (
     md2html_main,
@@ -9,6 +16,7 @@ from processors import (
     img2video_main,
     md2audio_main
 )
+from utils.paths import get_log_file_path
 
 # 初始化日志
 logging.basicConfig(
@@ -16,7 +24,7 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(),
-        logging.FileHandler(f"logs/{datetime.now().strftime('%Y%m%d_%H%M%S')}_main.log")
+        logging.FileHandler(get_log_file_path("main"))
     ]
 )
 logger = logging.getLogger(__name__)
@@ -51,8 +59,5 @@ async def main():
         raise
 
 if __name__ == "__main__":
-    # 确保logs目录存在
-    Path("logs").mkdir(exist_ok=True)
-    
-    # 运行主程序
+    # 运行主程序 (日志目录由 get_log_file_path 自动创建)
     asyncio.run(main()) 

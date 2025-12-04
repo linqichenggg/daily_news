@@ -4,13 +4,13 @@ from dotenv import load_dotenv
 from google import genai
 
 # 加载环境变量
-load_dotenv()
+load_dotenv('config.env')
 
 # ========== 配置区域 ==========
 # 从环境变量读取API key
 API_KEY = os.getenv("GEMINI_API_KEY")
 if not API_KEY:
-    raise ValueError("请在环境变量中设置 GEMINI_API_KEY，或者在 config.env 文件中配置")
+    raise ValueError("请在 config.env 文件中设置 GEMINI_API_KEY=your_key，或者设置环境变量")
 MODEL = "gemini-2.5-pro"
 PROMPT = """
 who are you?

@@ -19,10 +19,7 @@ except ImportError:
     sys.exit(1)
 
 # 导入公共模块
-from utils.paths import get_output_dir
-
-# 确保logs目录存在
-Path("logs").mkdir(exist_ok=True)
+from utils.paths import get_output_dir, get_log_file_path, get_output_base_dir
 
 # 初始化日志
 logging.basicConfig(
@@ -30,7 +27,7 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(),
-        logging.FileHandler(f"logs/{datetime.now().strftime('%Y%m%d_%H%M%S')}_html2img.log")
+        logging.FileHandler(get_log_file_path("html2img"))
     ]
 )
 logger = logging.getLogger(__name__)
@@ -154,9 +151,7 @@ async def main():
                 sys.exit(1)
         else:
             # 自动模式
-            output_dir = Path("output")
-            if not output_dir.exists():
-                output_dir.mkdir(parents=True, exist_ok=True)
+            output_dir = get_output_base_dir()
             
             # 查找最新的日期目录
             date_dirs = sorted([d for d in output_dir.glob("*") 

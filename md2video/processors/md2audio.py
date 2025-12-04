@@ -17,19 +17,17 @@ from dotenv import load_dotenv
 
 # Import Minimax client
 from utils.minimax_client import MinimaxTTS, SubtitleGenerator
+from utils.paths import get_log_file_path, get_output_dir
 
 # 加载环境变量
 load_dotenv()
-
-# 确保logs目录存在
-Path("logs").mkdir(exist_ok=True)
 
 # 配置日志
 logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler(f"logs/{datetime.now().strftime('%Y%m%d_%H%M%S')}_md2audio.log"),
+        logging.FileHandler(get_log_file_path("md2audio")),
         logging.StreamHandler()
     ]
 )
@@ -49,6 +47,13 @@ def preprocess_text(text):
     """预处理文本，处理链接和图片等Markdown元素"""
     logging.debug(f"预处理前的文本: {text[:100]}..." if len(text) > 100 else f"预处理前的文本: {text}")
     
+    # 处理类似 S.T.A.L.K.E.R. 这样的缩写（连续的单字母+点），转换为没有点的形式
+    # 例如: S.T.A.L.K.E.R. -> STALKER, G.A.M.M.A. -> GAMMA
+    def remove_dots_from_acronym(match):
+        return match.group(0).replace('.', '')
+    text = re.sub(r'(?:[A-Z]\.){2,}[A-Z]?\.?', remove_dots_from_acronym, text)
+    logging.debug(f"处理缩写后: {text[:100]}..." if len(text) > 100 else f"处理缩写后: {text}")
+    
     # 处理链接 [文本](链接) -> 文本
     # 匹配 Markdown 链接，包括带空格的格式
     text = re.sub(r'\[(.*?)\][ ]*\(.*?\)', r'\1', text)
@@ -65,7 +70,7 @@ def preprocess_text(text):
     text = text.replace('-', ' ')
     
     # 将英文双引号转换为中文双引号
-    text = text.replace('"', '“').replace('"', '”')
+    text = text.replace('"', '"').replace('"', '"')
     
     # 处理英文句点，将其转换为中文句号
     text = re.sub(r'([.])(?=\s|$)', '。', text)
@@ -82,6 +87,16 @@ def sanitize_filename(filename):
     # 将引号、空格和其他特殊字符替换为下划线
     filename = re.sub(r'["\'\s\\/:*?"<>|]', '_', filename)
     return filename
+
+def sanitize_title_for_tts(title):
+    """清理标题，移除可能导致 TTS 失败的字符"""
+    # 处理类似 S.T.A.L.K.E.R. 这样的缩写（连续的单字母+点）
+    # 转换为没有点的形式
+    title = re.sub(r'\.([A-Z])\.', r'\1', title)  # 移除字母之间的点
+    title = re.sub(r'([A-Z])\.([A-Z])', r'\1\2', title)  # 再次处理
+    title = re.sub(r'\.+', ' ', title)  # 多个点替换为空格
+    title = re.sub(r'\s+', ' ', title).strip()  # 清理多余空格
+    return title
 
 def save_timeline(timeline_data, current_date, output_dir):
     """保存时间轴数据到JSON文件"""
@@ -125,8 +140,7 @@ def parse_markdown_and_generate_audio(markdown_content):
     
     # 获取当前日期并创建输出目录
     current_date = date.today().strftime("%Y%m%d")
-    output_dir = Path("output") / current_date
-    output_dir.mkdir(parents=True, exist_ok=True)
+    output_dir = get_output_dir()  # 使用统一的路径函数
     logging.info(f"输出目录: {output_dir}")
     
     # 使用正则表达式找出所有## 开头的标题及其内容
@@ -235,12 +249,15 @@ def parse_markdown_and_generate_audio(markdown_content):
             
         # 记录章节结束时间 (包含停顿)
         section_end_time = format_time(current_time)
-            
-        timeline_data.append({
-            "title": title,
-            "start_seconds": section_start_time,
-            "end_seconds": section_end_time
-        })
+        
+        # 跳过开场和结束语，不记录到 timeline（它们不需要对应的新闻图片）
+        skip_titles = ["单机游戏日报", "开场", "结束", "结束语"]
+        if title not in skip_titles:
+            timeline_data.append({
+                "title": title,
+                "start_seconds": section_start_time,
+                "end_seconds": section_end_time
+            })
     
     # 保存合并的音频文件
     try:
