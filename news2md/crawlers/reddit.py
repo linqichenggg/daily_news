@@ -8,6 +8,7 @@ from typing import List
 from pathlib import Path
 import yaml
 import feedparser
+import requests
 
 from .base import BaseCrawler, NewsPost
 
@@ -16,7 +17,8 @@ class RedditCrawler(BaseCrawler):
     """Reddit RSS 爬虫"""
     
     RSS_BASE_URL = "https://www.reddit.com/r/{subreddit}/top/.rss?t=day&limit=3"
-    USER_AGENT = "DailyGamingNewsBot/1.0"
+    # 使用真实浏览器 UA 避免被 Reddit 限制
+    USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     
     def __init__(self, config: dict = None):
         super().__init__("reddit")
@@ -29,21 +31,39 @@ class RedditCrawler(BaseCrawler):
             full_config = yaml.safe_load(f)
         return full_config.get('reddit', {})
     
+    def _get_headers(self) -> dict:
+        """获取请求头"""
+        return {
+            'User-Agent': self.USER_AGENT,
+            'Accept': 'application/rss+xml,application/xml,text/xml,*/*',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Cache-Control': 'no-cache',
+        }
+    
+    def _fetch_rss(self, url: str) -> feedparser.FeedParserDict:
+        """使用 requests 获取 RSS 内容，然后用 feedparser 解析"""
+        response = requests.get(url, headers=self._get_headers(), timeout=30)
+        response.raise_for_status()
+        return feedparser.parse(response.content)
+    
     def test_connection(self) -> bool:
         """测试 RSS 连接"""
         try:
             test_url = self.RSS_BASE_URL.format(subreddit="Games")
-            feed = feedparser.parse(test_url, agent=self.USER_AGENT)
+            feed = self._fetch_rss(test_url)
             
-            if feed.status == 200 and len(feed.entries) > 0:
+            if len(feed.entries) > 0:
                 print("✅ Reddit RSS 连接成功！")
                 return True
-            elif feed.status == 403:
-                print("❌ Reddit 返回 403，可能是 IP 被限制")
-                return False
             else:
-                print(f"❌ Reddit RSS 连接失败，状态码: {feed.status}")
+                print("❌ Reddit RSS 返回空数据")
                 return False
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 403:
+                print("❌ Reddit 返回 403，IP 被限制，跳过 Reddit")
+            else:
+                print(f"❌ Reddit HTTP 错误: {e.response.status_code}")
+            return False
         except Exception as e:
             print(f"❌ Reddit RSS 连接失败: {e}")
             return False
@@ -127,11 +147,7 @@ class RedditCrawler(BaseCrawler):
         url = self.RSS_BASE_URL.format(subreddit=subreddit_name)
         
         try:
-            feed = feedparser.parse(url, agent=self.USER_AGENT)
-            
-            if feed.status != 200:
-                print(f"  ⚠️ r/{subreddit_name}: 状态码 {feed.status}")
-                return posts
+            feed = self._fetch_rss(url)
             
             for entry in feed.entries:
                 pub_time = self._parse_published_time(entry)
@@ -144,6 +160,8 @@ class RedditCrawler(BaseCrawler):
             
             print(f"  📰 r/{subreddit_name}: 获取 {len(posts)} 条帖子")
             
+        except requests.exceptions.HTTPError as e:
+            print(f"  ⚠️ r/{subreddit_name}: HTTP {e.response.status_code}")
         except Exception as e:
             print(f"  ⚠️ r/{subreddit_name} 爬取失败: {e}")
         

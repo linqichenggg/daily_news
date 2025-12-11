@@ -15,7 +15,7 @@ class NewsAnalyzer:
     """使用 Gemini 分析游戏新闻"""
     
     SYSTEM_PROMPT = """从帖子中提取游戏新闻，返回JSON数组：
-[{"title":"标题15字内","summary":"摘要80字","audio_text":"播报60字，尽可能详细介绍新闻内容","original_url":"链接"}]
+[{"title":"标题15字内","summary":"详细摘要100字以内，尽可能详细介绍，包含背景细节","audio_text":"播报3-5句话，简单介绍即可","original_url":"链接"}]
 要求：中文、直接陈述、只返回JSON"""
 
     def __init__(self, config: dict = None):

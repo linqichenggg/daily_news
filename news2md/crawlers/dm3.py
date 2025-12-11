@@ -17,7 +17,7 @@ class DM3Crawler(BaseCrawler):
     NEWS_URL = "https://www.3dmgame.com/news_32_1/"
     
     # 最多收集多少条新闻
-    MAX_POSTS = 20
+    MAX_POSTS = 30
     
     USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     
@@ -50,7 +50,7 @@ class DM3Crawler(BaseCrawler):
             return False
     
     def crawl(self) -> List[NewsPost]:
-        """爬取3DM单机游戏新闻（从最新开始，最多20条）"""
+        """爬取3DM单机游戏新闻（从最新开始，最多30条）"""
         print("🔹 开始爬取3DM单机游戏新闻...")
         posts = []
         
@@ -76,7 +76,7 @@ class DM3Crawler(BaseCrawler):
                         posts.append(post)
                         # 打印第一条新闻的时间，验证是否从最新开始
                         if len(posts) == 1:
-                            print(f"   最新新闻: {post.title[:20]}... ({post.published_at})")
+                            print(f"   最新新闻: {post.title[30]}... ({post.published_at})")
                 except Exception as e:
                     print(f"   ⚠️ 解析新闻条目失败: {e}")
                     continue

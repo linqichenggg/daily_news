@@ -31,15 +31,21 @@ logger = logging.getLogger(__name__)
 
 async def main():
     try:
+        # 直接指定外部 MD 路径（浅显易懂）
+        audio_md_path = Path("/Users/lqcmacmini/daily_news/news2md/audioText.md")
+        news_md_path = Path("/Users/lqcmacmini/daily_news/news2md/newsText.md")
+
+        logger.info(f"使用的音频文稿: {audio_md_path}")
+        logger.info(f"使用的新闻文稿: {news_md_path}")
 
         # 4. Markdown转音频
         logger.info("开始执行Markdown到音频的转换...")
-        md2audio_main("audioText.md")  # 这个函数不是异步的
+        md2audio_main(str(audio_md_path))  # 这个函数不是异步的
         logger.info("Markdown到音频转换完成")
 
         # 1. Markdown转HTML
         logger.info("开始执行Markdown到HTML的转换...")
-        await md2html_main()
+        await md2html_main(content_path=news_md_path)
         logger.info("Markdown到HTML转换完成")
 
         # 2. HTML转图片

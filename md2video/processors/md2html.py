@@ -225,19 +225,33 @@ Requirements:
         logger.error(f"生成HTML时发生错误: {e}")
         return template, ""  # 出错时返回空模板
 
-async def main():
-    # 解析命令行参数
-    parser = argparse.ArgumentParser(description="生成HTML静态页面")
-    parser.add_argument("--output", "-o", default="html_pages", help="HTML页面输出目录")
-    parser.add_argument("--content", "-c", default="newsText.md", help="内容文件路径")
-    args = parser.parse_args()
+async def main(content_path=None):
+    """
+    生成新闻 HTML 页面。
+    - content_path 传入时优先使用（可为 Path 或 str，支持绝对路径）
+    - 未传入时，回退到命令行参数；再回退到 env: NEWS_MD_PATH；最后默认 newsText.md
+    """
+    if content_path is None:
+        # 解析命令行参数（兼容命令行调用）
+        parser = argparse.ArgumentParser(description="生成HTML静态页面")
+        parser.add_argument("--output", "-o", default="html_pages", help="HTML页面输出目录")
+        parser.add_argument(
+            "--content",
+            "-c",
+            default=os.getenv("NEWS_MD_PATH", "newsText.md"),
+            help="内容文件路径（可为绝对路径）"
+        )
+        args = parser.parse_args()
+        content_path = Path(args.content)
+    else:
+        content_path = Path(content_path)
 
     try:
         # 获取标准输出目录
         output_dir = get_output_dir("html")
         
         # 读取内容文件
-        md_content = await read_file_content(Path(args.content))
+        md_content = await read_file_content(content_path)
         
         # 读取HTML模板 - 新闻详情页模板
         detail_template_path = Path(project_root) / "templates" / "news_detail_template.html"
