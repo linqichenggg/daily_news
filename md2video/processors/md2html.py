@@ -152,10 +152,11 @@ async def generate_html_for_news(news_content: str, client: AsyncOpenAI, system_
     
     try:
         # 先用代码替换日期（不依赖 LLM）
-        from datetime import datetime
+        from datetime import datetime, timedelta
         weekdays = ['一', '二', '三', '四', '五', '六', '日']
-        today = datetime.now()
-        date_str = f"{today.year}年{today.month:02d}月{today.day:02d}日 星期{weekdays[today.weekday()]}"
+        # 显示明天的日期（因为是提前一天生成第二天的早报）
+        tomorrow = datetime.now() + timedelta(days=1)
+        date_str = f"{tomorrow.year}年{tomorrow.month:02d}月{tomorrow.day:02d}日 星期{weekdays[tomorrow.weekday()]}"
         template = template.replace('{{DATE}}', date_str)
         
         # 构建包含模板的用户提示词
