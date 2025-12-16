@@ -129,10 +129,11 @@ async def create_index_page(titles: list, summaries: list, output_dir: Path, ind
 '''
     
     # 替换模板占位符
-    from datetime import datetime
+    from datetime import datetime, timedelta
     weekdays = ['一', '二', '三', '四', '五', '六', '日']
-    today = datetime.now()
-    date_str = f"{today.year}年{today.month:02d}月{today.day:02d}日 星期{weekdays[today.weekday()]}"
+    # 显示明天的日期（因为是提前一天生成第二天的早报）
+    tomorrow = datetime.now() + timedelta(days=1)
+    date_str = f"{tomorrow.year}年{tomorrow.month:02d}月{tomorrow.day:02d}日 星期{weekdays[tomorrow.weekday()]}"
     
     index_content = index_template.replace('{{DATE}}', date_str)
     index_content = index_content.replace('{{NEWS_ITEMS}}', news_items_html)

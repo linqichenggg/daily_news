@@ -137,8 +137,8 @@ class MinimaxTTS:
         response.raise_for_status()
         return response.json()
 
-    def wait_for_completion(self, task_id, max_attempts=120, delay=2):
-        """等待任务完成"""
+    def wait_for_completion(self, task_id, max_attempts=240, delay=3):
+        """等待任务完成（默认最长约12分钟：240次×3秒）"""
         print("Waiting for task completion...")
         for attempt in range(max_attempts):
             try:

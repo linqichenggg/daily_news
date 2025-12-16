@@ -40,32 +40,56 @@ class RedditCrawler(BaseCrawler):
             'Cache-Control': 'no-cache',
         }
     
-    def _fetch_rss(self, url: str) -> feedparser.FeedParserDict:
-        """使用 requests 获取 RSS 内容，然后用 feedparser 解析"""
-        response = requests.get(url, headers=self._get_headers(), timeout=30)
-        response.raise_for_status()
-        return feedparser.parse(response.content)
+    def _fetch_rss(self, url: str, max_retries: int = 3) -> feedparser.FeedParserDict:
+        """使用 requests 获取 RSS 内容，然后用 feedparser 解析（带重试机制）"""
+        import time
+        
+        last_exception = None
+        for attempt in range(max_retries):
+            try:
+                # 每次重试增加超时时间
+                timeout = 30 + (attempt * 10)
+                response = requests.get(url, headers=self._get_headers(), timeout=timeout)
+                response.raise_for_status()
+                return feedparser.parse(response.content)
+            except (requests.exceptions.ConnectionError, 
+                    requests.exceptions.Timeout,
+                    ConnectionResetError) as e:
+                last_exception = e
+                if attempt < max_retries - 1:
+                    wait_time = (attempt + 1) * 2  # 递增等待时间：2秒、4秒、6秒
+                    print(f"  ⚠️ 连接失败 (尝试 {attempt + 1}/{max_retries})，{wait_time}秒后重试...")
+                    time.sleep(wait_time)
+                else:
+                    print(f"  ❌ 已重试 {max_retries} 次仍失败")
+                    raise last_exception
+            except requests.exceptions.HTTPError as e:
+                # HTTP 错误不重试（如 403、404）
+                raise e
+        
+        raise last_exception
     
     def test_connection(self) -> bool:
-        """测试 RSS 连接"""
+        """测试 RSS 连接（带重试）"""
         try:
             test_url = self.RSS_BASE_URL.format(subreddit="Games")
-            feed = self._fetch_rss(test_url)
+            print("  🔄 正在连接 Reddit RSS...")
+            feed = self._fetch_rss(test_url)  # 已内置重试机制
             
             if len(feed.entries) > 0:
-                print("✅ Reddit RSS 连接成功！")
+                print("  ✅ Reddit RSS 连接成功！")
                 return True
             else:
-                print("❌ Reddit RSS 返回空数据")
+                print("  ❌ Reddit RSS 返回空数据")
                 return False
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == 403:
-                print("❌ Reddit 返回 403，IP 被限制，跳过 Reddit")
+                print("  ❌ Reddit 返回 403，IP 被限制，跳过 Reddit")
             else:
-                print(f"❌ Reddit HTTP 错误: {e.response.status_code}")
+                print(f"  ❌ Reddit HTTP 错误: {e.response.status_code}")
             return False
         except Exception as e:
-            print(f"❌ Reddit RSS 连接失败: {e}")
+            print(f"  ❌ Reddit RSS 连接失败: {e}")
             return False
     
     def _parse_published_time(self, entry) -> datetime:

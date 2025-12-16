@@ -31,9 +31,18 @@ logger = logging.getLogger(__name__)
 
 async def main():
     try:
-        # 直接指定外部 MD 路径（浅显易懂）
-        audio_md_path = Path("/Users/lqcmacmini/daily_news/news2md/audioText.md")
-        news_md_path = Path("/Users/lqcmacmini/daily_news/news2md/newsText.md")
+        # 自动定位最新日期的 news2md 输出（/news2md/output/YYYYMMDD/）
+        def get_latest_md_paths():
+            output_root = Path("/Users/lqcmacmini/daily_news/news2md/output")
+            dated_dirs = [d for d in output_root.glob("*") if d.is_dir() and d.name.isdigit()]
+            if dated_dirs:
+                latest = max(dated_dirs)
+                return latest / "audioText.md", latest / "newsText.md"
+            # 回退到 news2md 根目录
+            fallback_dir = Path("/Users/lqcmacmini/daily_news/news2md")
+            return fallback_dir / "audioText.md", fallback_dir / "newsText.md"
+
+        audio_md_path, news_md_path = get_latest_md_paths()
 
         logger.info(f"使用的音频文稿: {audio_md_path}")
         logger.info(f"使用的新闻文稿: {news_md_path}")
