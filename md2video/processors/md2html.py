@@ -191,8 +191,12 @@ Requirements:
             ]
         }
         
+        logger.info(f"正在请求 {client.model} API（新闻 {index+1}）...")
+        logger.info(f"超时设置: 300秒, 重试次数: 5次")
+        
         response = await client.chat.completions.create(**completion_params)
         clean_response = response.choices[0].message.content.strip()
+        logger.info(f"✅ API 响应成功，内容长度: {len(clean_response)} 字符")
         
         if clean_response.startswith("```html"):
             clean_response = clean_response[7:]
@@ -218,14 +222,18 @@ Requirements:
                     break
 
         if not clean_response.startswith(("<!DOCTYPE", "<html")):
-            logger.warning("返回的内容不是有效的HTML，使用原始模板作为降级方案")
-            # 简单的降级处理：直接替换字符串（如果不符合LLM格式）
-            return template.replace("{{TITLE}}", "生成失败").replace("{{CONTENT}}", news_content), summary
+            error_msg = f"❌ LLM返回的内容不是有效的HTML（新闻 {index+1}）"
+            logger.error(error_msg)
+            logger.error(f"返回内容: {clean_response[:200]}...")
+            raise ValueError(error_msg)
         
         return clean_response, summary
     except Exception as e:
-        logger.error(f"生成HTML时发生错误: {e}")
-        return template, ""  # 出错时返回空模板
+        logger.error(f"❌ 生成HTML时发生错误（新闻 {index+1}）: {e}")
+        logger.error(f"错误类型: {type(e).__name__}")
+        logger.error(f"错误详情: {str(e)}")
+        logger.error(f"⚠️ 不使用降级方案，抛出异常...")
+        raise  # 重新抛出异常，确保失败时停止执行
 
 async def main(content_path=None):
     """
@@ -290,11 +298,12 @@ async def main(content_path=None):
             raise ValueError("未找到环境变量 LLM_API_KEY，请在 .env 文件中设置")
         
         # 创建OpenAI客户端
+        # DeepSeek-V3 模型较大，需要更长的超时时间
         client = AsyncOpenAI(
             base_url=md2html_config['base_url'],
             api_key=api_key,
-            timeout=60.0,
-            max_retries=3
+            timeout=300.0,   # 超时时间：5分钟（DeepSeek-V3需要更长时间）
+            max_retries=5    # 重试次数：5次（确保成功）
         )
         # 设置模型名称
         client.model = md2html_config['name']
@@ -307,24 +316,43 @@ async def main(content_path=None):
         file_paths = []
         titles = []
         summaries = []
+        total_news = len(news_items)
+        
         for i, news_item in enumerate(news_items):
+            logger.info(f"\n{'='*60}")
+            logger.info(f"📰 处理进度: {i+1}/{total_news}")
+            logger.info(f"{'='*60}")
+            
             title_match = re.search(r'^## (.+?)(\n|$)', news_item)
             title = f"## {title_match.group(1).strip()}" if title_match else f"## 新闻 {i+1}"
             titles.append(title)
             
-            # 生成并保存HTML，同时获取摘要
-            html_content, summary = await generate_html_for_news(
-                news_item, 
-                client, 
-                md2html_config['system_prompt'], 
-                detail_template_content,
-                i
-            )
-            summaries.append(summary)
+            # 添加重试间隔（避免API速率限制）
+            if i > 0:
+                import asyncio
+                wait_time = 3  # 每个新闻之间等待3秒
+                logger.info(f"⏳ 等待 {wait_time} 秒后处理下一条新闻（避免API限流）...")
+                await asyncio.sleep(wait_time)
             
-            file_path = output_dir / f"news_{i+1}.html"
-            await save_html_page(html_content, file_path)
-            file_paths.append(file_path)
+            # 生成并保存HTML，同时获取摘要
+            try:
+                html_content, summary = await generate_html_for_news(
+                    news_item, 
+                    client, 
+                    md2html_config['system_prompt'], 
+                    detail_template_content,
+                    i
+                )
+                summaries.append(summary)
+                
+                file_path = output_dir / f"news_{i+1}.html"
+                await save_html_page(html_content, file_path)
+                file_paths.append(file_path)
+                logger.info(f"✅ 新闻 {i+1}/{total_news} 生成成功！")
+            except Exception as e:
+                logger.error(f"❌ 新闻 {i+1}/{total_news} 生成失败！")
+                logger.error(f"请检查 DeepSeek API 连接或切换到其他模型")
+                raise  # 失败时停止所有处理
         
         # 创建目录页（如果有模板）
         if index_template_content:
